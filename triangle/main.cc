@@ -1,3 +1,4 @@
+#include "vulkan/vulkan.hpp"
 #include <GLFW/glfw3.h>
 #include <print>
 #include <vulkan/vulkan_raii.hpp>
@@ -16,15 +17,19 @@ public:
 
 private:
   GLFWwindow *window = nullptr;
+  vk::raii::Context context;
+  vk::raii::Instance instance = nullptr;
   void initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "woah", nullptr, nullptr);
   }
-  void initVulkan() {}
+  void initVulkan() {
+    createInstance();
+  }
 
   void mainLoop() {
     while (!glfwWindowShouldClose(window)) {
@@ -37,6 +42,16 @@ private:
 
     glfwTerminate();
   }
+
+  void createInstance() {
+    constexpr vk::ApplicationInfo appInfo{
+      .pApplicationName   = "Hello Triangle",
+      .applicationVersion = VK_MAKE_VERSION( 1, 0, 0 ),
+      .pEngineName        = "No Engine",
+      .engineVersion      = VK_MAKE_VERSION( 1, 0, 0 ),
+      .apiVersion         = vk::ApiVersion14 };
+    }
+  }
 };
 
 int main() {
@@ -45,7 +60,7 @@ int main() {
   try {
     app.run();
   } catch (const std::exception &e) {
-    std::println("{}", e.what());
+    //std::println("{}", e.what());
     return EXIT_FAILURE;
   }
 
