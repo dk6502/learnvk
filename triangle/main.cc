@@ -1,6 +1,9 @@
-#include "vulkan/vulkan.hpp"
+#include "VkBootstrap.h"
 #include <GLFW/glfw3.h>
 #include <print>
+#include <stdexcept>
+#include <string>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_raii.hpp>
 
 constexpr uint32_t WIDTH = 800;
@@ -17,8 +20,7 @@ public:
 
 private:
   GLFWwindow *window = nullptr;
-  vk::raii::Context context;
-  vk::raii::Instance instance = nullptr;
+  VkSurfaceKHR surface = VK_NULL_HANDLE;
   void initWindow() {
     glfwInit();
 
@@ -28,7 +30,16 @@ private:
     window = glfwCreateWindow(WIDTH, HEIGHT, "woah", nullptr, nullptr);
   }
   void initVulkan() {
-    createInstance();
+    vkb::InstanceBuilder builder;
+    auto inst_ret = builder.set_app_name("triangle!?!")
+                        .request_validation_layers()
+                        .use_default_debug_messenger()
+                        .build();
+    if (!inst_ret)
+      throw std::runtime_error("Could not build a vulkan instance");
+    vkb::Instance vkb_inst = inst_ret.value();
+    VkResult glfw_result = glfwCreateWindowSurface(vkb_inst, window, nullptr, &surface);
+    if (glfw_result != VK_SUCCESS) throw std::runtime_error("Failed to initialize vulkan surface");
   }
 
   void mainLoop() {
@@ -43,15 +54,7 @@ private:
     glfwTerminate();
   }
 
-  void createInstance() {
-    constexpr vk::ApplicationInfo appInfo{
-      .pApplicationName   = "Hello Triangle",
-      .applicationVersion = VK_MAKE_VERSION( 1, 0, 0 ),
-      .pEngineName        = "No Engine",
-      .engineVersion      = VK_MAKE_VERSION( 1, 0, 0 ),
-      .apiVersion         = vk::ApiVersion14 };
-    }
-  }
+  void createInstance() {}
 };
 
 int main() {
@@ -60,7 +63,7 @@ int main() {
   try {
     app.run();
   } catch (const std::exception &e) {
-    //std::println("{}", e.what());
+    std::println(stderr,"{}", e.what());
     return EXIT_FAILURE;
   }
 
